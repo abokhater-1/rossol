@@ -1,12 +1,13 @@
 name: Build Windows
+
 on:
   push:
-    tags: [ 'v*' ]
-  workflow_dispatch:
+    tags: [ 'v*' ]        # build when you push a tag like v1.0.0
+  workflow_dispatch:       # or run manually from the Actions tab
 
 jobs:
   windows:
-    runs-on: windows-2025
+    runs-on: windows-2025  # or use "windows-latest" / "windows-2022"
     steps:
       - uses: actions/checkout@v4
 
@@ -15,43 +16,54 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      # Show what's in the repo (helps debugging)
-      - name: List files
+      # List files to help debug path issues
+      - name: List repo files
         shell: pwsh
         run: |
           Get-ChildItem -Recurse -File | Select-Object FullName
 
-      # Install deps (fallback to npm install if no lockfile)
+      # Install deps (fall back to npm install if no lockfile)
       - name: Install dependencies
         shell: pwsh
         run: |
           if (Test-Path package-lock.json) { npm ci } else { npm install }
 
-      # Ensure Windows icon exists (generate from your logo if missing)
+      # Create an empty data folder to silence extraResources warnings (optional)
+      - name: Ensure data folder
+        shell: pwsh
+        run: |
+          if (-not (Test-Path data)) { New-Item -ItemType Directory data | Out-Null }
+
+      # Ensure Windows icon exists; generate from your PNG logo if missing
       - name: Ensure Windows icon
         shell: pwsh
         run: |
           if (-not (Test-Path build/icon.ico)) {
-            echo "build/icon.ico not found; trying to generate from a PNG logo..."
+            echo "build/icon.ico not found; generating from a PNG logo..."
             npm i -D electron-icon-builder
             if (Test-Path render/assets/logo.png) {
               npx electron-icon-builder --input=render/assets/logo.png --output=build --flatten
-              Copy-Item build/icons/icon.ico build/icon.ico
+              Copy-Item build/icons/icon.ico build/icon.ico -Force
             } elseif (Test-Path renderer/assets/logo.png) {
               npx electron-icon-builder --input=renderer/assets/logo.png --output=build --flatten
-              Copy-Item build/icons/icon.ico build/icon.ico
+              Copy-Item build/icons/icon.ico build/icon.ico -Force
             } else {
               echo "##[error] Missing build/icon.ico and no logo at render/assets/ or renderer/assets/"
               exit 1
             }
           }
 
-      # Build Windows: NSIS installer + portable EXE
-      - name: Build (electron-builder)
-        run: npm run dist:win
+      # Build Windows (NSIS installer + portable EXE), and DO NOT publish (no GH_TOKEN needed)
+      - name: Build (electron-builder, no publish)
+        run: npx electron-builder --win nsis portable -p never
 
-      # Upload the results
-      - uses: actions/upload-artifact@v4
+      # Upload the results as workflow artifacts
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
-          path: dist/*
+          path: |
+            dist/*.exe
+            dist/*.zip
+            dist/*.blockmap
+          if-no-files-found: error
