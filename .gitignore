@@ -1,0 +1,9 @@
+cat > .gitignore <<'TXT'
+node_modules/
+dist/
+out/
+*.log
+.DS_Store
+build/icon.iconset/
+data/rossol-data.json
+TXT

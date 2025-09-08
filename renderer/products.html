@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Products • Rossol</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <link rel="stylesheet" href="css/styles.css" />
+  <link rel="stylesheet" href="css/products.css" />
+</head>
+<body>
+  <a class="brand" href="index.html" aria-label="Back to welcome">
+    <img src="assets/logo.png" alt="Rossol logo">
+  </a>
+
+  <div id="notiBar" class="notibar hidden" role="status" aria-live="polite">
+    <span id="notiText"></span>
+    <button id="notiClose" aria-label="Close">✕</button>
+  </div>
+
+  <main class="container">
+    <header class="page-head">
+      <h1 class="title reveal-center">Inventory</h1>
+  
+    </header>
+
+    <section class="toolbar glass">
+      <input id="search" class="input" type="search" placeholder="Search by name, code or unit…" />
+      <button id="addBtn" class="btn btn--primary" type="button">+ Add item</button>
+    </section>
+
+
+    <section class="noti-center glass">
+      <header class="noti-head">
+        <h2>Notifications</h2>
+        <span id="notiCount" class="badge hidden">0</span>
+      </header>
+      <ul id="notiList" class="noti-list"></ul>
+      <div id="notiEmpty" class="noti-empty">No low-stock notifications.</div>
+    </section>
+
+    <section class="table-wrap glass">
+      <table class="glass-table">
+        <thead>
+          <tr>
+            <th>Item</th>
+            <th>Amount</th>
+            <th>Unit</th>
+            <th>Code</th>
+            <th class="actions">Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+      <div id="empty" class="empty hidden">No products found. Try a different search or add a new product.</div>
+    </section>
+  </main>
+
+  <div id="modal-backdrop" class="modal-backdrop hidden"></div>
+
+  <section id="productModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-panel">
+      <header class="modal-head">
+        <h3 id="modalTitle">Add product</h3>
+        <button class="icon-btn" data-close aria-label="Close">✕</button>
+      </header>
+
+      <form id="productForm" class="modal-body">
+        <input type="hidden" name="id" />
+        <div class="grid">
+          <label class="field">
+            <span>Name</span>
+            <input name="name" type="text"/>
+          </label>
+          <label class="field">
+            <span>Amount</span>
+            <input name="amount" type="number" step="0.01" min="0" />
+          </label>
+          <label class="field">
+            <span>Unit</span>
+            <input name="unit" type="text"/>
+          </label>
+          <label class="field">
+            <span>Code</span>
+            <input name="code" type="text"/>
+          </label>
+          <label class="field span-2">
+            <span>Notify when ≤ (optional)</span>
+            <input name="notifyWhen" type="number" step="0.01" min="0" />
+          </label>
+        </div>
+
+        <footer class="modal-foot">
+          <button class="btn" type="button" data-close>Cancel</button>
+          <button class="btn btn--primary" type="submit">Save</button>
+        </footer>
+      </form>
+    </div>
+  </section>
+
+  <section id="qtyModal" class="modal hidden" aria-hidden="true">
+    <div class="modal-panel">
+      <header class="modal-head">
+        <h3>Change amount</h3>
+        <button class="icon-btn" data-close aria-label="Close">✕</button>
+      </header>
+
+      <form id="qtyForm" class="modal-body">
+        <input type="hidden" name="id" />
+        <div class="grid grid-3">
+          <label class="field">
+            <span>Operation</span>
+            <select name="op">
+              <option value="set">Set to</option>
+              <option value="add">Add</option>
+              <option value="sub">Subtract</option>
+            </select>
+          </label>
+          <label class="field span-2">
+            <span>Amount</span>
+            <input name="amount" type="number" step="0.01"/>
+          </label>
+        </div>
+
+        <footer class="modal-foot">
+          <button class="btn" type="button" data-close>Cancel</button>
+          <button class="btn btn--primary" type="submit">Apply</button>
+        </footer>
+      </form>
+    </div>
+  </section>
+
+  <script src="js/products.js" defer></script>
+</body>
+</html>
