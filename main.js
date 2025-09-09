@@ -25,19 +25,16 @@ function ensureDataFile() {
   ensureDataDir();
   const file = DATA_FILE();
   if (!fs.existsSync(file)) {
+    // Create an EMPTY dataset on first run (no Sugar/Flour/etc.)
     const seed = {
       version: 1,
-      products: [
-        { id: uid(), name: 'Sugar',  amount: 12, unit: 'kg', code: 'SUG-100', notifyWhen: 10 },
-        { id: uid(), name: 'Flour',  amount: 25, unit: 'kg', code: 'FLR-210', notifyWhen: 8  },
-        { id: uid(), name: 'Milk',   amount: 40, unit: 'L',  code: 'MLK-050', notifyWhen: 15 },
-        { id: uid(), name: 'Coffee', amount: 8,  unit: 'kg', code: 'COF-333', notifyWhen: 6  }
-      ],
+      products: [],     // ← start empty
       dismissed: {}
     };
     fs.writeFileSync(file, JSON.stringify(seed, null, 2), 'utf8');
   }
 }
+
 
 function readData() {
   try {
