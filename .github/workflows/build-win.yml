@@ -2,12 +2,12 @@ name: Build Windows
 
 on:
   push:
-    tags: [ 'v*' ]        # build when you push a tag like v1.0.0
-  workflow_dispatch:       # or run manually from the Actions tab
+    tags: [ 'v*' ]
+  workflow_dispatch:
 
 jobs:
   windows:
-    runs-on: windows-2025  # or use "windows-latest" / "windows-2022"
+    runs-on: windows-2025  # or windows-latest / windows-2022
     steps:
       - uses: actions/checkout@v4
 
@@ -16,25 +16,21 @@ jobs:
           node-version: 20
           cache: 'npm'
 
-      # List files to help debug path issues
       - name: List repo files
         shell: pwsh
         run: |
           Get-ChildItem -Recurse -File | Select-Object FullName
 
-      # Install deps (fall back to npm install if no lockfile)
       - name: Install dependencies
         shell: pwsh
         run: |
           if (Test-Path package-lock.json) { npm ci } else { npm install }
 
-      # Create an empty data folder to silence extraResources warnings (optional)
-      - name: Ensure data folder
+      - name: Ensure data folder (optional, silences extraResources warning)
         shell: pwsh
         run: |
           if (-not (Test-Path data)) { New-Item -ItemType Directory data | Out-Null }
 
-      # Ensure Windows icon exists; generate from your PNG logo if missing
       - name: Ensure Windows icon
         shell: pwsh
         run: |
@@ -53,12 +49,11 @@ jobs:
             }
           }
 
-      # Build Windows (NSIS installer + portable EXE), and DO NOT publish (no GH_TOKEN needed)
-      - name: Build (electron-builder, no publish)
+      # ---- Standard Windows builds (installer + portable), no publish ----
+      - name: Build (installer + portable, no publish)
         run: npx electron-builder --win nsis portable -p never
 
-      # Upload the results as workflow artifacts
-      - name: Upload artifacts
+      - name: Upload installer/portable
         uses: actions/upload-artifact@v4
         with:
           name: windows-artifacts
@@ -66,4 +61,29 @@ jobs:
             dist/*.exe
             dist/*.zip
             dist/*.blockmap
+          if-no-files-found: warn
+
+      # ---- UNPACKED build (no asar) so you get raw HTML/JS/CSS/JSON files ----
+      - name: Build UNPACKED (no asar)
+        run: npx electron-builder --win dir -c.asar=false -p never
+
+      # Add a helper BAT to run in "portable" mode (data saved next to EXE)
+      - name: Add run-portable.bat
+        shell: pwsh
+        run: |
+          $bat = "@echo off`r`nset ROSSOL_PORTABLE=1`r`nstart "" ""%~dp0Rossol.exe""`r`n"
+          Set-Content -Path dist/win-unpacked/run-portable.bat -Value $bat -Encoding ASCII
+
+      # Zip the unpacked folder for easy download
+      - name: Zip UNPACKED folder
+        shell: pwsh
+        run: |
+          if (Test-Path dist/win-unpacked.zip) { Remove-Item dist/win-unpacked.zip -Force }
+          Compress-Archive -Path dist/win-unpacked/* -DestinationPath dist/win-unpacked.zip
+
+      - name: Upload UNPACKED (no asar)
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-unpacked-no-asar
+          path: dist/win-unpacked.zip
           if-no-files-found: error
