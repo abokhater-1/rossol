@@ -7,7 +7,7 @@ on:
 
 jobs:
   windows:
-    runs-on: windows-2025  # or windows-latest / windows-2022
+    runs-on: windows-2025   # or windows-latest / windows-2022
     steps:
       - uses: actions/checkout@v4
 
@@ -26,7 +26,7 @@ jobs:
         run: |
           if (Test-Path package-lock.json) { npm ci } else { npm install }
 
-      - name: Ensure data folder (optional, silences extraResources warning)
+      - name: Ensure data folder (optional)
         shell: pwsh
         run: |
           if (-not (Test-Path data)) { New-Item -ItemType Directory data | Out-Null }
@@ -49,7 +49,7 @@ jobs:
             }
           }
 
-      # ---- Standard Windows builds (installer + portable), no publish ----
+      # Standard Windows builds (installer + portable), do NOT publish
       - name: Build (installer + portable, no publish)
         run: npx electron-builder --win nsis portable -p never
 
@@ -63,18 +63,16 @@ jobs:
             dist/*.blockmap
           if-no-files-found: warn
 
-      # ---- UNPACKED build (no asar) so you get raw HTML/JS/CSS/JSON files ----
+      # UNPACKED build (no asar) so you can see raw HTML/JS/CSS/JSON
       - name: Build UNPACKED (no asar)
-        run: npx electron-builder --win dir -c.asar=false -p never
+        run: npx electron-builder --win dir --config.asar=false -p never
 
-      # Add a helper BAT to run in "portable" mode (data saved next to EXE)
       - name: Add run-portable.bat
         shell: pwsh
         run: |
           $bat = "@echo off`r`nset ROSSOL_PORTABLE=1`r`nstart "" ""%~dp0Rossol.exe""`r`n"
           Set-Content -Path dist/win-unpacked/run-portable.bat -Value $bat -Encoding ASCII
 
-      # Zip the unpacked folder for easy download
       - name: Zip UNPACKED folder
         shell: pwsh
         run: |
